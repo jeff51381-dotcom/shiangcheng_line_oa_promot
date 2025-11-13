@@ -1,7 +1,0 @@
-echo "# shiangcheng_line_oa_promot" >> README.md
-git init
-git add README.md
-git commit -m "first commit"
-git branch -M main
-git remote add origin https://github.com/jeff51381-dotcom/shiangcheng_line_oa_promot.git
-git push -u origin main
