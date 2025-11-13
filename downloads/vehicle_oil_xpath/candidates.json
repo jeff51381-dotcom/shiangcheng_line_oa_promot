@@ -1,0 +1,21 @@
+{
+  "start_url": "https://cpclube.cpc.com.tw/C_Products.aspx?n=7464&sms=12326&_CSN=13",
+  "candidates": [
+    {
+      "source": "https://cpclube.cpc.com.tw/C_Products.aspx?n=7464&sms=12326&_CSN=13",
+      "image": {
+        "url": "https://cpclube.cpc.com.tw/images/egov.png",
+        "alt": "我的E政府 [另開新視窗]",
+        "node": "<img alt=\"我的E政府 [另開新視窗]\" src=\"/images/egov.png\"/>"
+      }
+    },
+    {
+      "source": "https://cpclube.cpc.com.tw/C_Products.aspx?n=7464&sms=12326&_CSN=13",
+      "image": {
+        "url": "https://cpclube.cpc.com.tw/images/aplus.png",
+        "alt": "通過A等級無障礙網頁檢測",
+        "node": "<img alt=\"通過A等級無障礙網頁檢測\" src=\"/images/aplus.png\"/>"
+      }
+    }
+  ]
+}
