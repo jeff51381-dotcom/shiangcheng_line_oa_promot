@@ -1,10 +1,8 @@
 # download_vehicle_oil.py
 # 簡單範例：用 product_classification 取得車輛用油的 CPC 網頁，再下載頁面與頁面中常見檔案 (pdf, jpg, png)
-# 新增選項: --insecure 將跳過 TLS 驗證（僅作測試用！）
 
 import os
 import time
-import argparse
 import requests
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
@@ -14,12 +12,12 @@ from product_classification import classify
 OUT_DIR = "downloads/vehicle_oil"
 USER_AGENT = "MyDownloader/1.0 (+https://yourdomain.example)"
 SLEEP_BETWEEN_DOWNLOADS = 1.0  # 秒，避免打到伺服器太快
-REQUEST_TIMEOUT = 20
 
 os.makedirs(OUT_DIR, exist_ok=True)
 
-def download_url(session, url, dest_path):
-    with session.get(url, stream=True, timeout=REQUEST_TIMEOUT) as r:
+def download_url(url, dest_path):
+    headers = {"User-Agent": USER_AGENT}
+    with requests.get(url, headers=headers, stream=True, timeout=30) as r:
         r.raise_for_status()
         with open(dest_path, "wb") as f:
             for chunk in r.iter_content(chunk_size=8192):
@@ -29,13 +27,10 @@ def download_url(session, url, dest_path):
 def sanitize_filename(url):
     p = urlparse(url)
     name = os.path.basename(p.path) or "index.html"
+    # fallback: remove query
     return name.split("?")[0]
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--insecure", action="store_true", help="Disable SSL verification (insecure)")
-    args = parser.parse_args()
-
     info = classify("車輛用油")
     if not info:
         print("找不到對應的 CPC 分類")
@@ -43,25 +38,10 @@ def main():
     url = info["cpc_url"]
     print("CPC 頁面 URL:", url)
 
-    session = requests.Session()
-    session.headers.update({"User-Agent": USER_AGENT})
-    # 這裡把 verify 設為可選
-    session.verify = not args.insecure
-    if args.insecure:
-        # disable warnings about unverified HTTPS requests
-        from urllib3.exceptions import InsecureRequestWarning
-        import urllib3
-        urllib3.disable_warnings(InsecureRequestWarning)
-        print("WARNING: SSL verification is disabled (insecure).")
-
     # 1) 下載整個 HTML 頁面
-    resp = session.get(url, timeout=REQUEST_TIMEOUT)
-    try:
-        resp.raise_for_status()
-    except Exception as e:
-        print("下載分類頁失敗:", e)
-        return
-
+    headers = {"User-Agent": USER_AGENT}
+    resp = requests.get(url, headers=headers, timeout=20)
+    resp.raise_for_status()
     html_path = os.path.join(OUT_DIR, "page.html")
     with open(html_path, "w", encoding=resp.encoding or "utf-8") as f:
         f.write(resp.text)
@@ -79,12 +59,13 @@ def main():
         if full in seen:
             continue
         seen.add(full)
+        # 只抓常見檔案類型
         if any(full.lower().endswith(ext) for ext in [".pdf", ".zip", ".jpg", ".jpeg", ".png", ".gif"]):
             fname = sanitize_filename(full)
             dest = os.path.join(OUT_DIR, fname)
             try:
                 print("下載:", full, "->", dest)
-                download_url(session, full, dest)
+                download_url(full, dest)
                 time.sleep(SLEEP_BETWEEN_DOWNLOADS)
             except Exception as e:
                 print("下載失敗:", full, e)
