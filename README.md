@@ -1,41 +1,44 @@
-# CPC 產品圖片下載工具
+```markdown
+## CPC 產品下載（自動化）
 
-這個專案提供 `cpcl_image_downloader.py`，可從中油 CPC 的產品型錄頁面中抓取指定分類的產品圖片，並依產品名稱建立資料夾。
+本專案新增了用於從台灣中油 (CPC) 下載產品頁面與相關資源的工具與 CI workflow：
 
-## 需求
-- Python 3.9+
-- `requests`
-- `beautifulsoup4`
+- product_classification.py：CPC 分類對照表與 classify(name) 函式。
+- download_vehicle_oil.py：範例下載腳本，會下載「車輛用油」分類的頁面與頁面內常見資源（PDF、圖片等），輸出到 downloads/vehicle_oil。
+- .github/workflows/download_cpc.yml：可手動觸發或在 push 到 add-product-classification 分支時執行的 GitHub Actions workflow，執行後會把 downloads 目錄上傳為 artifact（名稱：cpc-downloads）。
 
-安裝方式：
+如何使用（快速上手）：
+1. 取得或切換到分支：
+   - 若分支已在遠端：  
+     git fetch origin  
+     git checkout -b add-product-classification origin/add-product-classification  
+   - 若要在本機建新分支：  
+     git checkout -b add-product-classification
 
-```bash
-pip install -r requirements.txt
-```
+2. （若你尚未新增 workflow）將 `.github/workflows/download_cpc.yml` 放入專案（內容如上）。
 
-## 使用方式
+3. 確認下載腳本與分類模組在分支裡：
+   - product_classification.py
+   - download_vehicle_oil.py
 
-```bash
-python cpcl_image_downloader.py \
-    --categories 車輛用油 海運用油 工業用油 滑脂 基礎油 \
-    --output ./downloads \
-    --delay 0.5
-```
+4. Commit 並 push：
+   git add .github/workflows/download_cpc.yml
+   git commit -m "Add GitHub Actions workflow for CPC downloads and update README"
+   git push --set-upstream origin add-product-classification
 
-- `--categories`：自訂要下載的分類名稱，預設即為上例中的五個分類。
-- `--output`：下載資料夾 (預設 `./downloads`)。
-- `--delay`：每一次 HTTP 請求後的延遲秒數，避免對官方網站造成過大壓力。
-- `--retries` 與 `--timeout` 也可視需要調整。
+5. 在 GitHub UI 建立 Pull Request（推薦流程）：  
+   - PR 標題：Add CPC download script and workflow  
+   - PR 描述（可複製）：
+     - 新增 product_classification.py（CPC 分類映射）
+     - 新增 download_vehicle_oil.py（下載範例腳本）
+     - 新增 workflow .github/workflows/download_cpc.yml（手動觸發 / push 觸發）
+     - 請 reviewer 特別確認 SYNONYMS 與檔案放置路徑是否符合專案慣例
 
-腳本會依序：
-1. 在分類列表頁中找出匹配的分類連結。
-2. 掃描分類頁面內的所有產品，抓取詳細頁網址。
-3. 在產品詳細頁面搜尋圖片連結並下載。
-4. 以「分類/產品名稱」建立資料夾儲存圖片，若檔案已存在則自動略過。
+6. 觸發 workflow：
+   - 在 GitHub → Actions → 選擇 "Download CPC Product Pages" → Run workflow（或 push 到 add-product-classification 分支）。
+   - 執行完成後至該 run 的 Artifacts 區塊，下載 cpc-downloads artifact。
 
-> **注意**：中油網站屬於 ASP.NET WebForms，若官方有調整 HTML 版型，請更新腳本內的選擇條件或直接指定新的分類網址。
-
-## 限制與建議
-- 為降低被封鎖的風險，建議將 `--delay` 設為 0.5 秒以上。
-- 若分類名稱未出現在型錄首頁，腳本會提示錯誤，可直接修改 `cpcl_image_downloader.py` 內的 `CATALOG_URL` 或手動指定分類連結。
-- 圖片檔名會自動以流水號 `01.jpg`, `02.jpg` ... 命名，以便區分同一產品的多張圖片。
+注意事項
+- 若目標網站需要登入或有防爬機制，請把必要憑證、代理或 cookie 放到 repo Secrets，並在 workflow 中以 secrets 使用（不要把憑證寫入程式碼）。
+- 請遵守網站使用條款與 robots.txt，避免短時間內大量請求。
+- 建議先在開發分支上 review & 測試，再合併到主要分支。
